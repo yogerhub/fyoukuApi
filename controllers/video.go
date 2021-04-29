@@ -45,3 +45,29 @@ func (vc *VideoController)ChannelHotList()  {
 		vc.ServeJSON()
 	}
 }
+
+// ChannelRecommendRegionList 频道页-根据频道地区获取推荐的视频列表
+// @router /channel/recommend/region [*]
+func (vc *VideoController) ChannelRecommendRegionList() {
+	channelId,_ := vc.GetInt("channelId")
+	regionId,_ := vc.GetInt("regionId")
+	if channelId == 0 {
+		vc.Data["json"] = ReturnError(4001,"必须指定频道")
+		vc.ServeJSON()
+	}
+	if regionId == 0 {
+		vc.Data["json"] = ReturnError(4002,"必须指定频道地区")
+		vc.ServeJSON()
+	}
+
+	num,videos,err := models.GetChannelRecommendRegionList(channelId,regionId)
+	if err != nil {
+		vc.Data["json"] = ReturnError(4004,"没有相关内容")
+		vc.ServeJSON()
+	}else {
+		vc.Data["json"] = ReturnSuccess(0,"success",videos,num)
+		vc.ServeJSON()
+	}
+
+
+}
