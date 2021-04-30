@@ -120,10 +120,46 @@ func (vc *VideoController) ChannelVideo() {
 
 	num, videos, err := models.GetChannelVideoList(channelId, regionId, typeId, end, sort, offset, limit)
 	if err != nil {
-		vc.Data["json"] = ReturnError(4004,"没有相关信息")
+		vc.Data["json"] = ReturnError(4004, "没有相关信息")
 		vc.ServeJSON()
-	}else {
-		vc.Data["json"] = ReturnSuccess(0,"success",videos,num)
+	} else {
+		vc.Data["json"] = ReturnSuccess(0, "success", videos, num)
+		vc.ServeJSON()
+	}
+}
+
+// VideoInfo 获取视频详情
+// @router /video/info [*]
+func (vc *VideoController) VideoInfo() {
+	videoId, _ := vc.GetInt("videoId")
+	if videoId == 0 {
+		vc.Data["json"] = ReturnError(4001, "必须指定视频ID")
+		vc.ServeJSON()
+	}
+	video, err := models.GetVideoInfo(videoId)
+	if err != nil {
+		vc.Data["json"] = ReturnError(4004, "请求数据失败")
+		vc.ServeJSON()
+	} else {
+		vc.Data["json"] = ReturnSuccess(0, "success", video, 1)
+		vc.ServeJSON()
+	}
+}
+
+// VideoEpisodesList 获取视频剧集列表
+// @router /video/episodes/list [*]
+func (vc *VideoController) VideoEpisodesList() {
+	videoId, _ := vc.GetInt("videoId")
+	if videoId == 0 {
+		vc.Data["json"] = ReturnError(4001, "必须指定视频ID")
+		vc.ServeJSON()
+	}
+	num, episodes, err := models.GetVideoEpisodesList(videoId)
+	if err != nil {
+		vc.Data["json"] = ReturnError(4004, "请求数据失败")
+		vc.ServeJSON()
+	} else {
+		vc.Data["json"] = ReturnSuccess(0, "success", episodes, num)
 		vc.ServeJSON()
 	}
 }

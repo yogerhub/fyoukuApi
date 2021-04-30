@@ -1,6 +1,9 @@
 package models
 
-import "github.com/astaxie/beego/orm"
+import (
+	"fmt"
+	"github.com/astaxie/beego/orm"
+)
 
 type Video struct {
 	Id                 int
@@ -28,6 +31,15 @@ type VideoData struct {
 	Img1          string
 	EpisodesCount int
 	IsEnd         int
+}
+
+type Episodes struct {
+	Id      int
+	Title   string
+	AddTime int64
+	Num     int
+	PlayUrl string
+	Comment int
 }
 
 func init() {
@@ -88,4 +100,20 @@ func GetChannelVideoList(channelId, regionId, typeId int, end, sort string, offs
 	qs = qs.Limit(limit, offset)
 	_, err := qs.Values(&videos, "id", "title", "sub_title", "add_time", "img", "img1", "episodes_count", "is_end")
 	return nums, videos, err
+}
+
+func GetVideoInfo(videoId int) (Video, error) {
+	o := orm.NewOrm()
+	var video Video
+	err := o.Raw("SELECT * FROM video WHERE id=? LIMIT 1", videoId).QueryRow(&video)
+	return video, err
+
+}
+
+func GetVideoEpisodesList(videoId int) (int64, []Episodes, error) {
+	o := orm.NewOrm()
+	var episodes []Episodes
+	num, err := o.Raw("SELECT id,title,add_time,num,play_url,comment FROM video_episodes WHERE video_id=? AND status=1 ORDER BY num ASC", videoId).QueryRows(&episodes)
+	fmt.Println(episodes)
+	return num, episodes, err
 }
