@@ -7,6 +7,24 @@ import (
 
 func init() {
 
+    beego.GlobalControllerRouter["fyoukuApi/controllers:BaseController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:BaseController"],
+        beego.ControllerComments{
+            Method: "ChannelRegion",
+            Router: `/channel/region`,
+            AllowHTTPMethods: []string{"*"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["fyoukuApi/controllers:BaseController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:BaseController"],
+        beego.ControllerComments{
+            Method: "ChannelType",
+            Router: `/channel/type`,
+            AllowHTTPMethods: []string{"*"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["fyoukuApi/controllers:UserController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:UserController"],
         beego.ControllerComments{
             Method: "LoginDo",
