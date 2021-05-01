@@ -9,4 +9,5 @@ func init() {
 	beego.Include(&controllers.UserController{})
 	beego.Include(&controllers.VideoController{})
 	beego.Include(&controllers.BaseController{})
+	beego.Include(&controllers.CommentController{})
 }

@@ -15,6 +15,13 @@ type User struct {
 	Avatar   string
 }
 
+type UserInfo struct {
+	Id      int    `json:"id"`
+	Name    string `json:"name"`
+	AddTime int64  `json:"addTime"`
+	Avatar  string `json:"avatar"`
+}
+
 func init() {
 	orm.RegisterModel(new(User))
 }
@@ -45,16 +52,24 @@ func UserSave(mobile, password string) error {
 	return err
 }
 
-//登录功能
+// IsMobileLogin 登录功能
 func IsMobileLogin(mobile, password string) (int, string) {
-	o:= orm.NewOrm()
+	o := orm.NewOrm()
 	var user User
-	err := o.QueryTable("user").Filter("mobile",mobile).Filter("password",password).One(&user)
+	err := o.QueryTable("user").Filter("mobile", mobile).Filter("password", password).One(&user)
 
 	if err == orm.ErrNoRows {
-		return 0,""
-	}else if err == orm.ErrMissPK {
-		return 0,""
+		return 0, ""
+	} else if err == orm.ErrMissPK {
+		return 0, ""
 	}
-	return user.Id,user.Name
+	return user.Id, user.Name
+}
+
+// GetUserInfo 根据用户ID获取用户信息
+func GetUserInfo(uid int) (UserInfo, error) {
+	o := orm.NewOrm()
+	var user UserInfo
+	err := o.Raw("SELECT id,name,add_time,avatar FROM user WHERE id=? LIMIT 1", uid).QueryRow(&user)
+	return user, err
 }
