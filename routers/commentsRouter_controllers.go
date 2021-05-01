@@ -34,6 +34,15 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["fyoukuApi/controllers:CommentController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:CommentController"],
+        beego.ControllerComments{
+            Method: "Save",
+            Router: `/comment/save`,
+            AllowHTTPMethods: []string{"*"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["fyoukuApi/controllers:UserController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:UserController"],
         beego.ControllerComments{
             Method: "LoginDo",

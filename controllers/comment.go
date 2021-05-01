@@ -58,3 +58,37 @@ func (cc *CommentController) List() {
 		cc.ServeJSON()
 	}
 }
+
+// Save 保存评论
+// @router /comment/save [*]
+func (cc *CommentController) Save() {
+	content := cc.GetString("content")
+	uid,_ := cc.GetInt("uid")
+	episodesId,_ := cc.GetInt("episodesId")
+	videoId,_ := cc.GetInt("videoId")
+
+	if content == "" {
+		cc.Data["json"] = ReturnError(4001,"内容不能为空")
+		cc.ServeJSON()
+	}
+	if uid == 0 {
+		cc.Data["json"] = ReturnError(4002,"请先登录")
+		cc.ServeJSON()
+	}
+	if episodesId == 0 {
+		cc.Data["json"] = ReturnError(4003,"必须指定评论剧集ID")
+		cc.ServeJSON()
+	}
+	if videoId == 0 {
+		cc.Data["json"] = ReturnError(4005,"必须指定视频ID")
+		cc.ServeJSON()
+	}
+	err := models.SaveComment(content,uid,episodesId,videoId)
+	if err != nil {
+		cc.Data["json"] = ReturnError(5000,err)
+		cc.ServeJSON()
+	}else {
+		cc.Data["json"] = ReturnSuccess(0,"success","",1)
+		cc.ServeJSON()
+	}
+}
