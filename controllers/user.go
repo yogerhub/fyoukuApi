@@ -4,6 +4,8 @@ import (
 	"fyoukuApi/models"
 	"github.com/astaxie/beego"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 type UserController struct {
@@ -74,10 +76,38 @@ func (uc *UserController) LoginDo() {
 
 	uid, name := models.IsMobileLogin(mobile, MD5V(password))
 	if uid != 0 {
-		uc.Data["json"] = ReturnSuccess(0, "登录成功", map[string]interface{}{"uid":uid,"username": name},1)
+		uc.Data["json"] = ReturnSuccess(0, "登录成功", map[string]interface{}{"uid": uid, "username": name}, 1)
 		uc.ServeJSON()
 	} else {
 		uc.Data["json"] = ReturnError(4004, "手机号或密码不正确")
+		uc.ServeJSON()
+	}
+}
+
+// SendMessageDo 批量发送通知消息
+// @router /send/message [*]
+func (uc *UserController) SendMessageDo() {
+	uids := uc.GetString("uids")
+	content := uc.GetString("content")
+	if uids == "" {
+		uc.Data["json"] = ReturnError(4001, "请输入接收人")
+		uc.ServeJSON()
+	}
+	if content == "" {
+		uc.Data["json"] = ReturnError(4002, "请填写发送内容")
+		uc.ServeJSON()
+	}
+	messageId, err := models.SendMessageDo(content)
+	if err != nil {
+		uc.Data["json"] = ReturnError(5000, "发送失败")
+		uc.ServeJSON()
+	} else {
+		uidConfig := strings.Split(uids, ",")
+		for _, v := range uidConfig {
+			userId, _ := strconv.Atoi(v)
+			err = models.SendMessageUser(userId, messageId)
+		}
+		uc.Data["json"] = ReturnSuccess(0, "发送成功", "", 1)
 		uc.ServeJSON()
 	}
 }
