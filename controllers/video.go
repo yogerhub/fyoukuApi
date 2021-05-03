@@ -163,3 +163,21 @@ func (vc *VideoController) VideoEpisodesList() {
 		vc.ServeJSON()
 	}
 }
+
+// UserVideo 我的视频管理
+// @router /user/video [*]
+func (vc *VideoController)UserVideo()  {
+	uid,_ := vc.GetInt("uid")
+	if uid == 0 {
+		vc.Data["json"] = ReturnError(4001,"必须指定用户")
+		vc.ServeJSON()
+	}
+	num,videos,err := models.GetUserVideo(uid)
+	if err != nil {
+		vc.Data["json"] = ReturnError(4004,"没有相关信息")
+		vc.ServeJSON()
+	}else {
+		vc.Data["json"] = ReturnSuccess(0,"success",videos,num)
+		vc.ServeJSON()
+	}
+}
