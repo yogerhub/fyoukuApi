@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
+	"time"
 )
 
 type Video struct {
@@ -18,9 +19,9 @@ type Video struct {
 	Status             int
 	RegionId           int
 	TypeId             int
-	Sort               int
 	EpisodesUpdateTime int
 	Comment            int
+	UserId             int
 }
 type VideoData struct {
 	Id            int
@@ -138,4 +139,30 @@ func GetUserVideo(uid int) (int64, []VideoData, error) {
 	num, err := o.Raw("SELECT id,title,sub_title,img,img1,add_time,episodes_count,is_end FROM video WHERE user_id=? ORDER BY add_time DESC", uid).QueryRows(&videos)
 	return num, videos, err
 
+}
+
+func SaveVideo(title, subTitle string, channelId, regionId, typeId int, playUrl string, userId int) error {
+	o := orm.NewOrm()
+	var video Video
+	videoTime := time.Now().Unix()
+	video.Title = title
+	video.SubTitle = subTitle
+	video.AddTime = videoTime
+	video.Img = ""
+	video.Img1 = ""
+	video.EpisodesCount = 1
+	video.IsEnd = 1
+	video.ChannelId = channelId
+	video.Status = 1
+	video.RegionId = regionId
+	video.TypeId = typeId
+	video.EpisodesUpdateTime = int(videoTime)
+	video.Comment = 0
+	video.UserId = userId
+	videoId, err := o.Insert(&video)
+	if err == nil {
+		o.Raw("INSERT INTO video_episodes (title,add_time,num,video_id,play_url,status,comment) VALUE (?,?,?,?,?,?,?)", subTitle, videoTime, 1, videoId, playUrl, 1, 0).Exec()
+
+	}
+	return err
 }

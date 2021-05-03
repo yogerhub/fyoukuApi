@@ -181,3 +181,32 @@ func (vc *VideoController)UserVideo()  {
 		vc.ServeJSON()
 	}
 }
+
+// VideoSave 保存用户上传视频信息
+// @router /video/save [*]
+func (vc *VideoController) VideoSave() {
+	playUrl := vc.GetString("playUrl")
+	title := vc.GetString("title")
+	subTitle := vc.GetString("subTitle")
+	channelId ,_ := vc.GetInt("channelId")
+	typeId,_ := vc.GetInt("typeId")
+	regionId,_ := vc.GetInt("regionId")
+	uid,_ := vc.GetInt("uid")
+	if uid == 0 {
+		vc.Data["json"] = ReturnError(4001,"必须指定用户")
+		vc.ServeJSON()
+	}
+	if playUrl == "" {
+		vc.Data["json"] = ReturnError(4002,"视频地址不能为空")
+		vc.ServeJSON()
+	}
+	err := models.SaveVideo(title,subTitle,channelId,regionId,typeId,playUrl,uid)
+	if err != nil {
+		vc.Data["json"] = ReturnError(5000,err)
+		vc.ServeJSON()
+	}else {
+		vc.Data["json"] = ReturnSuccess(0,"success",nil,1)
+		vc.ServeJSON()
+	}
+
+}
