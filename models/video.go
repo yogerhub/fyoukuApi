@@ -2,7 +2,10 @@ package models
 
 import (
 	"fmt"
+	redisClient "fyoukuApi/services/redis"
 	"github.com/astaxie/beego/orm"
+	"github.com/garyburd/redigo/redis"
+	"strconv"
 	"time"
 )
 
@@ -108,7 +111,32 @@ func GetVideoInfo(videoId int) (Video, error) {
 	var video Video
 	err := o.Raw("SELECT * FROM video WHERE id=? LIMIT 1", videoId).QueryRow(&video)
 	return video, err
+}
 
+// RedisGetVideoInfo 增加redis缓存 - 获取视频详情
+func RedisGetVideoInfo(videoId int) (Video, error) {
+	var video Video
+	conn := redisClient.PoolConnect()
+	defer conn.Close()
+	//定义redis key
+	redisKey := "video:id:" + strconv.Itoa(videoId)
+	//判断key是否存在
+	exists, err := redis.Bool(conn.Do("exists", redisKey))
+	if exists {
+		res, _ := redis.Values(conn.Do("hgetall", redisKey))
+		err = redis.ScanStruct(res, &video)
+	} else {
+		o := orm.NewOrm()
+		err := o.Raw("SELECT * FROM video WHERE id=? LIMIT 1", videoId).QueryRow(&video)
+		if err == nil {
+			//保存redis
+			_, err := conn.Do("hmset", redis.Args{redisKey}.AddFlat(video)...)
+			if err == nil {
+				conn.Do("expire", redisKey, 86400)
+			}
+		}
+	}
+	return video, err
 }
 
 func GetVideoEpisodesList(videoId int) (int64, []Episodes, error) {
