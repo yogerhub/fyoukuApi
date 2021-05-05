@@ -51,7 +51,7 @@ func (cc *CommentController) List() {
 			commentInfo.Stamp = v.Stamp
 			commentInfo.PraiseCount = v.PraiseCount
 			//获取用户信息
-			commentInfo.UserInfo,_ = models.GetUserInfo(v.UserId)
+			commentInfo.UserInfo,_ = models.RedisGetUserInfo(v.UserId)
 			data = append(data,commentInfo)
 		}
 		cc.Data["json"] = ReturnSuccess(0,"success",data,num)
