@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"encoding/json"
 	redisClient "fyoukuApi/services/redis"
 	"github.com/astaxie/beego/orm"
 	"github.com/garyburd/redigo/redis"
@@ -139,11 +139,53 @@ func RedisGetVideoInfo(videoId int) (Video, error) {
 	return video, err
 }
 
+// GetVideoEpisodesList 获取视频剧集列表
 func GetVideoEpisodesList(videoId int) (int64, []Episodes, error) {
 	o := orm.NewOrm()
 	var episodes []Episodes
 	num, err := o.Raw("SELECT id,title,add_time,num,play_url,comment FROM video_episodes WHERE video_id=? AND status=1 ORDER BY num ASC", videoId).QueryRows(&episodes)
-	fmt.Println(episodes)
+	return num, episodes, err
+}
+
+// RedisGetVideoEpisodesList 增加redis缓存 - 获取视频剧集列表
+func RedisGetVideoEpisodesList(videoId int) (int64, []Episodes, error) {
+	var (
+		episodes []Episodes
+		num      int64
+		err      error
+	)
+	conn := redisClient.PoolConnect()
+	defer conn.Close()
+	redisKey := "video:episodes:videoId:" + strconv.Itoa(videoId)
+	//判断redisKey是否已经存在
+	exists, err := redis.Bool(conn.Do("exists", redisKey))
+	if exists {
+		num, err = redis.Int64(conn.Do("llen", redisKey))
+		if err == nil {
+			values, _ := redis.Values(conn.Do("lrange", redisKey, "0", "-1"))
+			var episodesInfo Episodes
+			for _, v := range values {
+				err = json.Unmarshal(v.([]byte), &episodesInfo)
+				if err == nil {
+					episodes = append(episodes, episodesInfo)
+				}
+			}
+		}
+	} else {
+		o := orm.NewOrm()
+		num, err = o.Raw("SELECT id,title,add_time,num,play_url,comment FROM video_episodes WHERE video_id=? AND status=1 ORDER BY num ASC", videoId).QueryRows(&episodes)
+		if err == nil {
+			//遍历获取到到信息，把信息json化保存
+			for _, v := range episodes {
+				jsonValue, err := json.Marshal(v)
+				if err == nil {
+					//保存redis中
+					conn.Do("rpush", redisKey, jsonValue)
+				}
+			}
+			conn.Do("expire", redisKey, 86400)
+		}
+	}
 	return num, episodes, err
 }
 
