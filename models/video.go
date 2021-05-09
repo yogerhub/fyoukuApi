@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	redisClient "fyoukuApi/services/redis"
 	"github.com/astaxie/beego/orm"
 	"github.com/garyburd/redigo/redis"
@@ -212,6 +213,7 @@ func RedisGetChannelTop(channelId int) (int64, []VideoData, error) {
 		num = 0
 		res, _ := redis.Values(conn.Do("zrevrange", redisKey, "0", "10", "WITHSCORES"))
 		for k, v := range res {
+			fmt.Println(string(v.([]byte)))
 			if k%2 == 0 {
 				videoId, err := strconv.Atoi(string(v.([]byte)))
 				videoInfo, err := RedisGetVideoInfo(videoId)
