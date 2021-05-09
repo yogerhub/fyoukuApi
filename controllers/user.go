@@ -105,7 +105,8 @@ func (uc *UserController) SendMessageDo() {
 		uidConfig := strings.Split(uids, ",")
 		for _, v := range uidConfig {
 			userId, _ := strconv.Atoi(v)
-			err = models.SendMessageUser(userId, messageId)
+			//err = models.SendMessageUser(userId, messageId)
+			models.SendMessageUserMq(userId, messageId)
 		}
 		uc.Data["json"] = ReturnSuccess(0, "发送成功", "", 1)
 		uc.ServeJSON()
