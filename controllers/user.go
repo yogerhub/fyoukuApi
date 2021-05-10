@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"fyoukuApi/models"
 	"github.com/astaxie/beego"
 	"regexp"
@@ -84,6 +85,40 @@ func (uc *UserController) LoginDo() {
 	}
 }
 
+//// SendMessageDo 批量发送通知消息
+//// @router /send/message [*]
+//func (uc *UserController) SendMessageDo() {
+//	uids := uc.GetString("uids")
+//	content := uc.GetString("content")
+//	if uids == "" {
+//		uc.Data["json"] = ReturnError(4001, "请输入接收人")
+//		uc.ServeJSON()
+//	}
+//	if content == "" {
+//		uc.Data["json"] = ReturnError(4002, "请填写发送内容")
+//		uc.ServeJSON()
+//	}
+//	messageId, err := models.SendMessageDo(content)
+//	if err != nil {
+//		uc.Data["json"] = ReturnError(5000, "发送失败")
+//		uc.ServeJSON()
+//	} else {
+//		uidConfig := strings.Split(uids, ",")
+//		for _, v := range uidConfig {
+//			userId, _ := strconv.Atoi(v)
+//			//err = models.SendMessageUser(userId, messageId)
+//			models.SendMessageUserMq(userId, messageId)
+//		}
+//		uc.Data["json"] = ReturnSuccess(0, "发送成功", "", 1)
+//		uc.ServeJSON()
+//	}
+//}
+
+type SendData struct {
+	UserId    int
+	MessageId int64
+}
+
 // SendMessageDo 批量发送通知消息
 // @router /send/message [*]
 func (uc *UserController) SendMessageDo() {
@@ -103,12 +138,37 @@ func (uc *UserController) SendMessageDo() {
 		uc.ServeJSON()
 	} else {
 		uidConfig := strings.Split(uids, ",")
-		for _, v := range uidConfig {
-			userId, _ := strconv.Atoi(v)
-			//err = models.SendMessageUser(userId, messageId)
-			models.SendMessageUserMq(userId, messageId)
+		count := len(uidConfig)
+		sendChan := make(chan SendData, count)
+		closeChan := make(chan bool, count)
+		go func() {
+			var data SendData
+			for _, v := range uidConfig {
+				userId, _ := strconv.Atoi(v)
+				data.UserId = userId
+				data.MessageId = messageId
+				sendChan <- data
+			}
+			close(sendChan)
+		}()
+		for i := 0; i < count; i++ {
+			go sendMessageFunc(sendChan, closeChan)
 		}
+
+		for i := 0; i < count; i++ {
+			<-closeChan
+		}
+		close(closeChan)
+
 		uc.Data["json"] = ReturnSuccess(0, "发送成功", "", 1)
 		uc.ServeJSON()
 	}
+}
+
+func sendMessageFunc(sendChan chan SendData, closeChan chan bool) {
+	for t := range sendChan {
+		fmt.Println(t)
+		models.SendMessageUserMq(t.UserId, t.MessageId)
+	}
+	closeChan <- true
 }
