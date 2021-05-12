@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"fyoukuApi/models"
+	"fyoukuApi/services/es"
 	"github.com/astaxie/beego"
+	"strconv"
 )
 
 type VideoController struct {
@@ -166,18 +168,18 @@ func (vc *VideoController) VideoEpisodesList() {
 
 // UserVideo 我的视频管理
 // @router /user/video [*]
-func (vc *VideoController)UserVideo()  {
-	uid,_ := vc.GetInt("uid")
+func (vc *VideoController) UserVideo() {
+	uid, _ := vc.GetInt("uid")
 	if uid == 0 {
-		vc.Data["json"] = ReturnError(4001,"必须指定用户")
+		vc.Data["json"] = ReturnError(4001, "必须指定用户")
 		vc.ServeJSON()
 	}
-	num,videos,err := models.GetUserVideo(uid)
+	num, videos, err := models.GetUserVideo(uid)
 	if err != nil {
-		vc.Data["json"] = ReturnError(4004,"没有相关信息")
+		vc.Data["json"] = ReturnError(4004, "没有相关信息")
 		vc.ServeJSON()
-	}else {
-		vc.Data["json"] = ReturnSuccess(0,"success",videos,num)
+	} else {
+		vc.Data["json"] = ReturnSuccess(0, "success", videos, num)
 		vc.ServeJSON()
 	}
 }
@@ -188,25 +190,53 @@ func (vc *VideoController) VideoSave() {
 	playUrl := vc.GetString("playUrl")
 	title := vc.GetString("title")
 	subTitle := vc.GetString("subTitle")
-	channelId ,_ := vc.GetInt("channelId")
-	typeId,_ := vc.GetInt("typeId")
-	regionId,_ := vc.GetInt("regionId")
-	uid,_ := vc.GetInt("uid")
+	channelId, _ := vc.GetInt("channelId")
+	typeId, _ := vc.GetInt("typeId")
+	regionId, _ := vc.GetInt("regionId")
+	uid, _ := vc.GetInt("uid")
 	if uid == 0 {
-		vc.Data["json"] = ReturnError(4001,"必须指定用户")
+		vc.Data["json"] = ReturnError(4001, "必须指定用户")
 		vc.ServeJSON()
 	}
 	if playUrl == "" {
-		vc.Data["json"] = ReturnError(4002,"视频地址不能为空")
+		vc.Data["json"] = ReturnError(4002, "视频地址不能为空")
 		vc.ServeJSON()
 	}
-	err := models.SaveVideo(title,subTitle,channelId,regionId,typeId,playUrl,uid)
+	err := models.SaveVideo(title, subTitle, channelId, regionId, typeId, playUrl, uid)
 	if err != nil {
-		vc.Data["json"] = ReturnError(5000,err)
+		vc.Data["json"] = ReturnError(5000, err)
 		vc.ServeJSON()
-	}else {
-		vc.Data["json"] = ReturnSuccess(0,"success",nil,1)
+	} else {
+		vc.Data["json"] = ReturnSuccess(0, "success", nil, 1)
 		vc.ServeJSON()
 	}
 
+}
+
+// SendEs 导入ES脚本
+// @router /video/send/es [*]
+func (vc *VideoController) SendEs() {
+	_, data, _ := models.GetAllList()
+	for _, v := range data {
+		body := map[string]interface{}{
+			"id":                   v.Id,
+			"title":                v.Title,
+			"sub_title":            v.SubTitle,
+			"add_time":             v.AddTime,
+			"img":                  v.Img,
+			"img1":                 v.Img1,
+			"episodes_count":       v.EpisodesCount,
+			"is_end":               v.IsEnd,
+			"channel_id":           v.ChannelId,
+			"status":               v.Status,
+			"region_id":            v.RegionId,
+			"type_id":              v.TypeId,
+			"episodes_update_time": v.EpisodesUpdateTime,
+			"comment":              v.Comment,
+			"user_id":              v.UserId,
+			"is_recommend":         v.IsRecommend,
+		}
+		es.EsAdd("fyouku_video", "video-"+strconv.Itoa(v.Id), body)
+	}
+	vc.Ctx.WriteString("ES")
 }

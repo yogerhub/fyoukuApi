@@ -26,6 +26,7 @@ type Video struct {
 	EpisodesUpdateTime int
 	Comment            int
 	UserId             int
+	IsRecommend             int
 }
 type VideoData struct {
 	Id            int
@@ -335,4 +336,12 @@ func SaveVideo(title, subTitle string, channelId, regionId, typeId int, playUrl 
 
 	}
 	return err
+}
+
+// GetAllList 获取所以视频数据
+func GetAllList() (int64, []Video, error) {
+	o := orm.NewOrm()
+	var videos []Video
+	num, err := o.Raw("SELECT id,title,sub_title,status,add_time,img,img1,channel_id,type_id,region_id,user_id,episodes_count,episodes_update_time,is_end,is_hot,is_recommend,comment FROM video").QueryRows(&videos)
+	return num, videos, err
 }
