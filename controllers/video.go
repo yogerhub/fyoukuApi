@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fyoukuApi/models"
 	"fyoukuApi/services/es"
 	"github.com/astaxie/beego"
@@ -211,6 +212,51 @@ func (vc *VideoController) VideoSave() {
 		vc.ServeJSON()
 	}
 
+}
+
+// Search 搜索接口
+// @router /video/search
+func (vc *VideoController) Search() {
+	//获取关键字
+	keyword := vc.GetString("keyword")
+	//获取分页信息
+	limit, _ := vc.GetInt("limit")
+	offset, _ := vc.GetInt("offset")
+	if keyword == "" {
+		vc.Data["json"] = ReturnError(4001, "关键字不能为空")
+		vc.ServeJSON()
+	}
+	if limit == 0 {
+		limit = 12
+	}
+	sort := []map[string]string{map[string]string{"id": "desc"}}
+
+	query := map[string]interface{}{
+		"bool": map[string]interface{}{
+			"must": map[string]interface{}{
+				"term": map[string]interface{}{
+					"title": keyword,
+				},
+			},
+		},
+	}
+	res := es.EsSearch("fyouku_video", query, offset, limit, sort)
+	total := res.Total.Value
+	var data []models.Video
+	for _, v := range res.Hits {
+		var itemData models.Video
+		err := json.Unmarshal([]byte(v.Source), &itemData)
+		if err == nil {
+			data = append(data, itemData)
+		}
+	}
+	if total > 0 {
+		vc.Data["json"] = ReturnSuccess(0, "success", data, int64(total))
+		vc.ServeJSON()
+	} else {
+		vc.Data["json"] = ReturnError(4004, "没有相关信息")
+		vc.ServeJSON()
+	}
 }
 
 // SendEs 导入ES脚本
