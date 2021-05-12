@@ -121,7 +121,7 @@ func (vc *VideoController) ChannelVideo() {
 		limit = 12
 	}
 
-	num, videos, err := models.GetChannelVideoList(channelId, regionId, typeId, end, sort, offset, limit)
+	num, videos, err := models.GetChannelVideoListEs(channelId, regionId, typeId, end, sort, offset, limit)
 	if err != nil {
 		vc.Data["json"] = ReturnError(4004, "没有相关信息")
 		vc.ServeJSON()

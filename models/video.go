@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"fyoukuApi/services/es"
 	redisClient "fyoukuApi/services/redis"
 	"github.com/astaxie/beego/orm"
 	"github.com/garyburd/redigo/redis"
@@ -26,7 +27,7 @@ type Video struct {
 	EpisodesUpdateTime int
 	Comment            int
 	UserId             int
-	IsRecommend             int
+	IsRecommend        int
 }
 type VideoData struct {
 	Id            int
@@ -109,6 +110,60 @@ func GetChannelVideoList(channelId, regionId, typeId int, end, sort string, offs
 	return nums, videos, err
 }
 
+func GetChannelVideoListEs(channelId, regionId, typeId int, end, sort string, offset, limit int) (int64, []Video, error) {
+	query := make(map[string]interface{})
+	bools := make(map[string]interface{})
+	var must []map[string]interface{}
+	must = append(must, map[string]interface{}{"term": map[string]interface{}{
+		"channel_id": channelId,
+	}})
+	must = append(must, map[string]interface{}{"term": map[string]interface{}{
+		"status": 1,
+	}})
+	if regionId > 0 {
+		must = append(must, map[string]interface{}{"term": map[string]interface{}{
+			"region_id": regionId,
+		}})
+	}
+	if typeId > 0 {
+		must = append(must, map[string]interface{}{"term": map[string]interface{}{
+			"type_id": typeId,
+		}})
+	}
+	if end == "n" {
+		must = append(must, map[string]interface{}{"term": map[string]interface{}{
+			"is_end": 0,
+		}})
+	} else if end == "y" {
+		must = append(must, map[string]interface{}{"term": map[string]interface{}{
+			"is_end": 1,
+		}})
+	}
+
+	bools["must"] = must
+	query["bool"] = bools
+	sortData := []map[string]string{map[string]string{"add_time": "desc"}}
+
+	if sort == "episodesUpdateTime" {
+		sortData = []map[string]string{map[string]string{"episodes_update_time": "desc"}}
+
+	} else if sort == "comment" {
+		sortData = []map[string]string{map[string]string{"comment": "desc"}}
+	} else if sort == "addTime" {
+		sortData = []map[string]string{map[string]string{"add_time": "desc"}}
+	}
+	res := es.EsSearch("fyouku_video", query, offset, limit, sortData)
+	total := res.Total.Value
+	var data []Video
+	for _, v := range res.Hits {
+		var itemData Video
+		err := json.Unmarshal([]byte(v.Source), &itemData)
+		if err == nil {
+			data = append(data, itemData)
+		}
+	}
+	return int64(total), data, nil
+}
 func GetVideoInfo(videoId int) (Video, error) {
 	o := orm.NewOrm()
 	var video Video
