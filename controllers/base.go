@@ -16,14 +16,17 @@ func (bc *BaseController) ChannelRegion() {
 	if channelId == 0 {
 		bc.Data["json"] = ReturnError(4001, "必须指定频道")
 		bc.ServeJSON()
+		return
 	}
 	num, regions, err := models.GetChannelRegion(channelId)
 	if err != nil {
 		bc.Data["json"] = ReturnError(4004, "没有相关信息")
 		bc.ServeJSON()
+		return
 	} else {
 		bc.Data["json"] = ReturnSuccess(0, "success", regions, num)
 		bc.ServeJSON()
+		return
 	}
 }
 
@@ -34,14 +37,17 @@ func (bc *BaseController) ChannelType() {
 	if channelId == 0 {
 		bc.Data["json"] = ReturnError(4001, "必须指定频道")
 		bc.ServeJSON()
+		return
 	}
 	num, types, err := models.GetChannelType(channelId)
 	if err != nil {
 		bc.Data["json"] = ReturnError(4004, "没有相关信息")
 		bc.ServeJSON()
+		return
 	} else {
 		bc.Data["json"] = ReturnSuccess(0, "success", types, num)
 		bc.ServeJSON()
+		return
 	}
 
 }

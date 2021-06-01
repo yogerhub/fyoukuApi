@@ -69,30 +69,37 @@ func (bc *BarrageController) Save() {
 	if content == "" {
 		bc.Data["json"] = ReturnError(4001, "弹幕不能为空")
 		bc.ServeJSON()
+		return
 	}
 	if uid == 0 {
 		bc.Data["json"] = ReturnError(4002, "请先登录")
 		bc.ServeJSON()
+		return
 	}
 	if episodesId == 0 {
 		bc.Data["json"] = ReturnError(4003, "必须指定剧集ID")
 		bc.ServeJSON()
+		return
 	}
 	if videoId == 0 {
 		bc.Data["json"] = ReturnError(4005, "必须指定视频ID")
 		bc.ServeJSON()
+		return
 	}
 	if currentTime == 0 {
 		bc.Data["json"] = ReturnError(4006, "必须指定视频播放时间")
 		bc.ServeJSON()
+		return
 	}
 	err := models.SaveBarrage(episodesId, videoId, currentTime, uid, content)
 
 	if err != nil {
 		bc.Data["json"] = ReturnError(5000, err)
 		bc.ServeJSON()
+		return
 	} else {
 		bc.Data["json"] = ReturnSuccess(0, "success", "", 1)
 		bc.ServeJSON()
+		return
 	}
 }

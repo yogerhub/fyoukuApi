@@ -72,6 +72,7 @@ func (cc *CommentController) List() {
 	if episodesId == 0 {
 		cc.Data["json"] = ReturnError(4001, "必须指定视频剧集")
 		cc.ServeJSON()
+		return
 	}
 	if limit == 0 {
 		limit = 12
@@ -81,6 +82,7 @@ func (cc *CommentController) List() {
 	if err != nil {
 		cc.Data["json"] = ReturnError(4001, "没有相关信息")
 		cc.ServeJSON()
+		return
 	} else {
 		var data []CommentInfo
 		var commentInfo CommentInfo
@@ -127,6 +129,7 @@ func (cc *CommentController) List() {
 
 		cc.Data["json"] = ReturnSuccess(0, "success", data, num)
 		cc.ServeJSON()
+		return
 	}
 }
 
@@ -153,25 +156,31 @@ func (cc *CommentController) Save() {
 	if content == "" {
 		cc.Data["json"] = ReturnError(4001, "内容不能为空")
 		cc.ServeJSON()
+		return
 	}
 	if uid == 0 {
 		cc.Data["json"] = ReturnError(4002, "请先登录")
 		cc.ServeJSON()
+		return
 	}
 	if episodesId == 0 {
 		cc.Data["json"] = ReturnError(4003, "必须指定评论剧集ID")
 		cc.ServeJSON()
+		return
 	}
 	if videoId == 0 {
 		cc.Data["json"] = ReturnError(4005, "必须指定视频ID")
 		cc.ServeJSON()
+		return
 	}
 	err := models.SaveComment(content, uid, episodesId, videoId)
 	if err != nil {
 		cc.Data["json"] = ReturnError(5000, err)
 		cc.ServeJSON()
+		return
 	} else {
 		cc.Data["json"] = ReturnSuccess(0, "success", "", 1)
 		cc.ServeJSON()
+		return
 	}
 }

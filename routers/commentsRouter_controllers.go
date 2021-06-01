@@ -106,6 +106,19 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["fyoukuApi/controllers:UserRpcController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:UserRpcController"],
+        beego.ControllerComments{
+            Method: "LoginDo",
+            Router: `/login/do`,
+            AllowHTTPMethods: []string{"*"},
+            MethodParams: param.Make(
+				param.New("ctx"),
+				param.New("req"),
+				param.New("res"),
+			),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["fyoukuApi/controllers:VideoController"] = append(beego.GlobalControllerRouter["fyoukuApi/controllers:VideoController"],
         beego.ControllerComments{
             Method: "ChannelAdvert",

@@ -19,6 +19,7 @@ func (vc *VideoController) ChannelAdvert() {
 	if channelId == 0 {
 		vc.Data["json"] = ReturnError(4001, "必须指定频道")
 		vc.ServeJSON()
+		return
 	}
 	num, videos, err := models.GetChannelAdvert(channelId)
 	if err != nil {
